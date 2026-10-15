@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amiguitos del AGUA 🌱</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Arial, sans-serif; }
+  body {
+    min-height:100vh;
+    background:linear-gradient(135deg,#c8f7dc 0%,#eaf7c8 100%);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .screen { width:100%; max-width:900px; }
+  /* ---- MENÚ PRINCIPAL ---- */
+  #menu { text-align:center; }
+  #menu h1 { font-size:2.4rem; color:#2e7d32; margin-bottom:6px; }
+  #menu p { color:#558b2f; font-size:1.1rem; margin-bottom:24px; }
+  .characters { display:flex; gap:20px; justify-content:center; flex-wrap:wrap; }
+  .char-card {
+    background:#fff; border-radius:20px; padding:18px 14px; width:200px;
+    cursor:pointer; border:4px solid transparent; transition:.2s; box-shadow:0 4px 12px rgba(0,0,0,.08);
+  }
+  .char-card:hover { transform:translateY(-4px); }
+  .char-card.selected { border-color:#43a047; background:#f1f8e9; }
+  .char-card img { width:150px; height:150px; object-fit:contain; display:block; margin:0 auto 10px; }
+  .char-card h3 { color:#2e7d32; font-size:1.2rem; }
+  .char-card span { display:block; color:#888; font-size:.9rem; margin-top:4px; }
+  .char-card small { display:block; color:#66bb6a; font-weight:600; margin-top:6px; }
+  #btnJugar {
+    margin-top:26px; padding:14px 50px; font-size:1.3rem; font-weight:700;
+    background:#43a047; color:#fff; border:none; border-radius:40px; cursor:pointer;
+    opacity:.4; transition:.2s; box-shadow:0 4px 10px rgba(67,160,71,.3);
+  }
+  #btnJugar.active { opacity:1; }
+  #btnJugar.active:hover { transform:scale(1.05); }
+  /* ---- PANTALLA DE JUEGO ---- */
+  #game { display:none; }
+  .game-box {
+    background:rgba(255,255,255,.92); border-radius:24px; padding:24px;
+    box-shadow:0 8px 30px rgba(0,0,0,.12); position:relative; max-width:820px; margin:0 auto;
+  }
+  .top-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  #btnSalir {
+    background:#e57373; color:#fff; border:none; padding:8px 16px; border-radius:20px;
+    font-weight:600; cursor:pointer;
+  }
+  #btnSalir:hover { background:#ef5350; }
+  .game-body { display:flex; gap:20px; align-items:flex-start; }
+  .left-panel { width:280px; text-align:center; flex-shrink:0; }
+  .mascot-wrap { position:relative; display:inline-block; }
+  .mascot-wrap img { width:280px; height:280px; object-fit:contain; cursor:pointer; }
+  .bubble {
+    position:absolute; top:-10px; left:50%; transform:translateX(-50%);
+    background:#fff; border:3px solid #43a047; border-radius:18px; padding:10px 16px;
+    font-size:1rem; font-weight:600; color:#2e7d32; min-width:220px; max-width:260px;
+    box-shadow:0 3px 8px rgba(0,0,0,.1);
+  }
+  .bubble::after {
+    content:''; position:absolute; bottom:-12px; left:50%; transform:translateX(-50%);
+    border:8px solid transparent; border-top-color:#43a047; border-bottom:0;
+  }
+  .right-panel { flex:1; }
+  .section { background:#f5fbf5; border-radius:16px; padding:16px; margin-bottom:16px; }
+  .section h3 { color:#2e7d32; margin-bottom:10px; font-size:1.05rem; display:flex; align-items:center; gap:8px; }
+  .glasses { display:flex; gap:8px; }
+  .glass {
+    width:42px; height:42px; border-radius:10px; border:2px solid #b3e5fc;
+    background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    font-size:1.2rem; transition:.15s;
+  }
+  .glass.filled { background:#4fc3f7; border-color:#29b6f6; }
+  .glass:hover { transform:scale(1.1); }
+  .counter { margin-left:auto; font-weight:700; color:#43a047; font-size:1rem; }
+  .activities { display:flex; gap:10px; flex-wrap:wrap; }
+  .act-btn {
+    padding:12px 18px; border:none; border-radius:30px; font-size:1rem; font-weight:600;
+    cursor:pointer; background:#a5d6a7; color:#1b5e20; transition:.15s; flex:1; min-width:110px;
+  }
+  .act-btn:hover { background:#81c784; transform:scale(1.03); }
+  .act-btn.done { background:#c8e6c9; color:#388e3c; opacity:.7; cursor:default; }
+  .progress-wrap { margin-top:14px; }
+  .progress-bar {
+    height:16px; background:#e0e0e0; border-radius:10px; overflow:hidden; margin-bottom:6px;
+  }
+  .progress-fill { height:100%; width:0%; background:#26a69a; transition:.3s; }
+  .progress-label { text-align:center; font-size:.9rem; color:#555; font-weight:600; }
+  #btnFinDia {
+    margin-top:16px; width:100%; padding:14px; font-size:1.1rem; font-weight:700;
+    background:#5c6bc0; color:#fff; border:none; border-radius:30px; cursor:pointer; transition:.15s;
+  }
+  #btnFinDia:hover { background:#3f51b5; }
+  /* ---- VICTORIA ---- */
+  #winScreen { display:none; text-align:center; padding:60px 20px; }
+  #winScreen h1 { font-size:2.6rem; color:#43a047; margin-bottom:10px; }
+  #winScreen p { font-size:1.3rem; color:#558b2f; margin-bottom:30px; }
+  #btnVolver {
+    padding:14px 40px; font-size:1.2rem; font-weight:700; background:#43a047; color:#fff;
+    border:none; border-radius:40px; cursor:pointer;
+  }
+  #btnVolver:hover { transform:scale(1.05); }
+  .confetti { position:fixed; top:-10px; font-size:1.4rem; animation:fall linear forwards; pointer-events:none; }
+  @keyframes fall { to { transform:translateY(110vh) rotate(360deg); } }
+  @media (max-width:700px){
+    .game-body { flex-direction:column; align-items:center; }
+    .left-panel { width:100%; }
+    .mascot-wrap img { width:200px; height:200px; }
+    .right-panel { width:100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- MENÚ PRINCIPAL -->
+<div id="menu" class="screen">
+  <h1>🌱 Mis Hábitos Saludables</h1>
+  <p>Elige a tu amigo y cuida tu cuerpo hoy 💪</p>
+  <div class="characters">
+    <div class="char-card" data-char="pollo">
+      <img src="pollo.png" alt="Pollito">
+      <h3>🐣 Pollito</h3>
+      <span>Para los más pequeños</span>
+      <small>4 - 7 años · 5 vasos</small>
+    </div>
+    <div class="char-card" data-char="oso">
+      <img src="oso.png" alt="Oso">
+      <h3>🐻 Oso</h3>
+      <span>Para crecer fuerte</span>
+      <small>8 - 11 años · 6 vasos</small>
+    </div>
+    <div class="char-card" data-char="zorro">
+      <img src="zorro.png" alt="Zorro">
+      <h3>🦊 Zorro</h3>
+      <span>Para los más grandes</span>
+      <small>12 - 16 años · 7 vasos</small>
+    </div>
+  </div>
+  <button id="btnJugar" disabled>▶ Jugar</button>
+</div>
+
+<!-- PANTALLA DE JUEGO -->
+<div id="game" class="screen">
+  <div class="game-box">
+    <div class="top-bar">
+      <button id="btnSalir">✖ Salir</button>
+    </div>
+    <div class="game-body">
+      <div class="left-panel">
+        <div class="mascot-wrap">
+          <div class="bubble"><span id="bubbleText">¡Hola! Haz clic en mí para tomar agua 💧</span></div>
+          <img id="mascotImg" src="" alt="Personaje">
+        </div>
+      </div>
+      <div class="right-panel">
+        <div class="section">
+          <h3>💧 Agua <span class="counter" id="waterCounter">0 / 0 vasos</span></h3>
+          <div class="glasses" id="glasses"></div>
+        </div>
+        <div class="section">
+          <h3>🏃 Actividad física</h3>
+          <div class="activities" id="activities"></div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-label" id="progressLabel">0 / 3 actividades</div>
+        </div>
+        <button id="btnFinDia">🌙 Fin de día</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PANTALLA DE RESULTADO -->
+<div id="winScreen" class="screen">
+  <h1 id="winTitle">🎉 ¡Felicidades!</h1>
+  <p id="winMsg">¡Estás muy saludable! ✨</p>
+  <button id="btnVolver">🏠 Volver al menú</button>
+</div>
+
+<script>
+// ---- CONFIGURACIÓN POR PERSONAJE ----
+const config = {
+  pollo: {
+    img: 'pollo.png', bg: 'granja.jpg',
+    vasos: 5,
+    frasesAgua: [
+      '¡Buen sorbo! 🐣',
+      '¡Así se hidrata el cuerpo! 💧',
+      '¡Vas genial! Sigue así 🌟',
+      '¡Cada vaso cuenta! 💙',
+      '¡Meta de agua completa! 🎉'
+    ],
+    actividades: ['🏃 Saltar', '🏃 Correr', '🧘 Estirar'],
+    frasesAct: {
+      '🏃 Saltar': ['¡Saltas como un pollito! 🐣','¡Qué brincos! ¡Sigue! ⭐','¡Increíble energía! ✨'],
+      '🏃 Correr': ['¡Corres rapidísimo! 💨','¡Pareces un cohete! 🚀','¡Gran velocidad! 🏁'],
+      '🧘 Estirar': ['¡Buen estiramiento! 🌿','¡Tu cuerpo lo agradece! 🙌','¡Flexibilidad de campeón! 🏆']
+    }
+  },
+  oso: {
+    img: 'oso.png', bg: 'bosque2.jpg',
+    vasos: 6,
+    frasesAgua: [
+      '¡Buen sorbo, oso! 🐻',
+      '¡El agua te da fuerza! 💪',
+      '¡Vas muy bien! 🌟',
+      '¡Sigue hidratándote! 💙',
+      '¡Casi llegas a la meta! 🎯',
+      '¡Meta de agua completa! 🎉'
+    ],
+    actividades: ['🏀 Deporte', '🏃 Correr', '💃 Bailar'],
+    frasesAct: {
+      '🏀 Deporte': ['¡Eres un campeón del deporte! 🏆','¡Gran jugada! ⚽','¡Fuerza de oso! 🐻'],
+      '🏃 Correr': ['¡Corres como un oso veloz! 💨','¡Gran esfuerzo! 🔥','¡Imparable! 🚀'],
+      '💃 Bailar': ['¡Bailas con mucho ritmo! 🎶','¡Ese movimiento es genial! 💃','¡Qué buena vibra! ✨']
+    }
+  },
+  zorro: {
+    img: 'zorro.png', bg: 'bosque1.jpg',
+    vasos: 7,
+    frasesAgua: [
+      '¡Buen sorbo, zorro! 🦊',
+      '¡El agua te hace más listo! 🧠',
+      '¡Vas excelente! 🌟',
+      '¡Sigue así! 💙',
+      '¡Casi lo logras! 🎯',
+      '¡Un poquito más! 💧',
+      '¡Meta de agua completa! 🎉'
+    ],
+    actividades: ['🏀 Deporte', '🏋️ Ejercicio', '💃 Baile'],
+    frasesAct: {
+      '🏀 Deporte': ['¡Eres el mejor del deporte! 🏆','¡Jugada maestra! ⚽','¡Nivel profesional! 🔥'],
+      '🏋️ Ejercicio': ['¡Gran esfuerzo! Así se cuida el cuerpo 🔥','¡Fuerza de zorro! 🦊','¡Impresionante! 💪'],
+      '💃 Baile': ['¡Bailas con mucho estilo! 💃','¡Qué ritmo tan bueno! 🎶','¡Eres una estrella! ⭐']
+    }
+  }
+};
+
+let current = null;      // personaje seleccionado
+let agua = 0;            // vasos tomados
+let actDone = new Set(); // actividades completadas
+let fraseIdx = {};       // índice de frases por actividad
+
+// ---- MENÚ: selección de personaje ----
+const cards = document.querySelectorAll('.char-card');
+cards.forEach(card => {
+  card.addEventListener('click', () => {
+    cards.forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    current = card.dataset.char;
+    document.getElementById('btnJugar').classList.add('active');
+    document.getElementById('btnJugar').disabled = false;
+  });
+});
+
+// ---- JUGAR ----
+document.getElementById('btnJugar').addEventListener('click', () => {
+  if (!current) return;
+  const cfg = config[current];
+  agua = 0;
+  actDone = new Set();
+  fraseIdx = {};
+
+  // fondo
+  document.body.style.backgroundImage = `url('${cfg.bg}')`;
+  document.body.style.backgroundSize = 'cover';
+  document.body.style.backgroundPosition = 'center';
+
+  // mascota
+  document.getElementById('mascotImg').src = cfg.img;
+  document.getElementById('bubbleText').textContent = '¡Hola! Haz clic en mí para tomar agua 💧';
+
+  // vasos
+  const glasses = document.getElementById('glasses');
+  glasses.innerHTML = '';
+  for (let i = 0; i < cfg.vasos; i++) {
+    const g = document.createElement('div');
+    g.className = 'glass';
+    g.textContent = '💧';
+    g.addEventListener('click', () => tomarAgua());
+    glasses.appendChild(g);
+  }
+  updateWater();
+
+  // actividades
+  const acts = document.getElementById('activities');
+  acts.innerHTML = '';
+  cfg.actividades.forEach(a => {
+    const b = document.createElement('button');
+    b.className = 'act-btn';
+    b.textContent = a;
+    b.addEventListener('click', () => hacerActividad(a, b));
+    acts.appendChild(b);
+  });
+
+  updateProgress();
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('game').style.display = 'block';
+  document.getElementById('winScreen').style.display = 'none';
+});
+
+// ---- TOMAR AGUA (clic en vaso o en mascota) ----
+function tomarAgua() {
+  const cfg = config[current];
+  if (agua >= cfg.vasos) return;
+  agua++;
+  updateWater();
+  const frase = cfg.frasesAgua[Math.min(agua - 1, cfg.frasesAgua.length - 1)];
+  document.getElementById('bubbleText').textContent = frase;
+}
+
+function updateWater() {
+  const cfg = config[current];
+  const glasses = document.querySelectorAll('.glass');
+  glasses.forEach((g, i) => g.classList.toggle('filled', i < agua));
+  document.getElementById('waterCounter').textContent = `${agua} / ${cfg.vasos} vasos`;
+}
+
+// ---- ACTIVIDAD FÍSICA ----
+function hacerActividad(act, boton) {
+  const cfg = config[current];
+  if (actDone.has(act)) return; // no repetir
+  actDone.add(act);
+  boton.classList.add('done');
+  boton.style.pointerEvents = 'none';
+  if (!fraseIdx[act]) fraseIdx[act] = 0;
+  const frases = cfg.frasesAct[act];
+  const frase = frases[fraseIdx[act] % frases.length];
+  fraseIdx[act]++;
+  document.getElementById('bubbleText').textContent = frase;
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = config[current].actividades.length;
+  const done = actDone.size;
+  document.getElementById('progressFill').style.width = (done / total * 100) + '%';
+  document.getElementById('progressLabel').textContent = `${done} / ${total} actividades`;
+}
+
+// ---- FIN DE DÍA (siempre disponible) ----
+document.getElementById('btnFinDia').addEventListener('click', () => {
+  const cfg = config[current];
+  const nombre = current === 'pollo' ? 'Pollito' : current === 'oso' ? 'Oso' : 'Zorro';
+  let titulo, msg;
+
+  if (agua <= 2) {
+    titulo = '😅 ¡Casi!';
+    msg = `No tomaste mucha agua hoy, ${nombre}. ¡Mañana intenta tomar más! 💧`;
+  } else if (agua <= 4) {
+    titulo = '👍 ¡Bien!';
+    msg = `Vas por buen camino, ${nombre}. ¡Mañana completa tus vasos! 💪`;
+  } else {
+    titulo = '🎉 ¡Felicidades!';
+    msg = `¡Estás muy saludable, ${nombre}! ¡Gran día! ✨`;
+    lanzarConfeti();
+  }
+
+  document.getElementById('winTitle').textContent = titulo;
+  document.getElementById('winMsg').textContent = msg;
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('winScreen').style.display = 'block';
+});
+
+// ---- CONFETI ----
+function lanzarConfeti() {
+  const emojis = ['🎉','🎊','✨','⭐','💧','🌱'];
+  for (let i = 0; i < 40; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.animationDuration = (2 + Math.random() * 2) + 's';
+    c.style.fontSize = (1 + Math.random() * 1.5) + 'rem';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4500);
+  }
+}
+
+// ---- SALIR / VOLVER ----
+document.getElementById('btnSalir').addEventListener('click', () => {
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('menu').style.display = 'block';
+  document.body.style.backgroundImage = '';
+});
+
+document.getElementById('btnVolver').addEventListener('click', () => {
+  document.getElementById('winScreen').style.display = 'none';
+  document.getElementById('menu').style.display = 'block';
+  document.body.style.backgroundImage = '';
+  cards.forEach(c => c.classList.remove('selected'));
+  document.getElementById('btnJugar').classList.remove('active');
+  document.getElementById('btnJugar').disabled = true;
+  current = null;
+});
+
+// clic en la mascota = tomar agua
+document.getElementById('mascotImg').addEventListener('click', tomarAgua);
+</script>
+</body>
+</html>
